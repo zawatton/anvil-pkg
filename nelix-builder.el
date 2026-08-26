@@ -598,7 +598,13 @@ cons cell.")
      ;; `nelix-out' supply per-recipe specifics, so one preset builds any
      ;; elpa/git Emacs package (skipping hidden files like .dir-locals.el).
      (unpack
-      . (nelix-invoke "tar" "xzf" (nelix-source-archive) "--strip-components=1"))
+      ;; --force-local: on Windows, GNU tar (as shipped by Git Bash/MSYS2)
+      ;; otherwise parses a "c:/..." absolute path as a "host:path" remote
+      ;; archive spec (tar's traditional rmt(8) syntax) and fails trying
+      ;; to "connect" to a host literally named "c". Harmless everywhere
+      ;; else (paths there never contain a drive-letter colon), so it is
+      ;; passed unconditionally rather than gated on `system-type'.
+      . (nelix-invoke "tar" "xzf" (nelix-source-archive) "--strip-components=1" "--force-local"))
      (install
       . (let ((files (append (nelix-build-package-el-files)
                              (nelix-build-package-extra-files))))
@@ -687,6 +693,7 @@ Examples:
 (defvar nelix-build--pname)
 (defvar nelix-build--source-archive)
 (defvar nelix-build--el-exclude)
+(defvar nelix-build--extra-data-paths)
 
 (defun nelix-builder--run-phase (phase-name cmd build-dir out-dir &optional phase-inputs)
   "Run build phase PHASE-NAME in BUILD-DIR with $out=OUT-DIR.

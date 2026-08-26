@@ -166,14 +166,20 @@ recipe can list a path that only appears in some upstream versions."
 
 (defun nelix-build--env ()
   "Return the deterministic environment KV list for `nelix-invoke' (Tier-1).
-Sets a minimal PATH, scrubs HOME to the build dir, exports `out', and pins
-SOURCE_DATE_EPOCH/TZ/LC_ALL.  Passed to env(1) so no shell is needed."
-  (list (concat "out=" (or nelix-build--out ""))
-        "PATH=/usr/bin:/bin"
-        (concat "HOME=" (or nelix-build--dir ""))
-        "SOURCE_DATE_EPOCH=1"
-        "TZ=UTC"
-        "LC_ALL=C"))
+Scrubs HOME to the build dir, exports `out', and pins
+SOURCE_DATE_EPOCH/TZ/LC_ALL.  On POSIX also pins a minimal PATH
+\(/usr/bin:/bin\); on Windows PATH is left to `nelix-invoke's
+`process-environment' fallback \(there is no POSIX env(1) or
+/usr/bin:/bin, and build tools like tar/git live on the ambient
+Windows PATH\)."
+  (append
+   (list (concat "out=" (or nelix-build--out "")))
+   (unless (eq system-type 'windows-nt)
+     (list "PATH=/usr/bin:/bin"))
+   (list (concat "HOME=" (or nelix-build--dir ""))
+         "SOURCE_DATE_EPOCH=1"
+         "TZ=UTC"
+         "LC_ALL=C")))
 
 (defun nelix-build--stringify (x)
   "Coerce phase-argument X to a string (numbers/symbols allowed)."
@@ -186,15 +192,21 @@ SOURCE_DATE_EPOCH/TZ/LC_ALL.  Passed to env(1) so no shell is needed."
 (defun nelix-invoke (program &rest args)
   "Run PROGRAM with ARGS in the build dir with the deterministic build env.
 Signals `nelix-build-error' on a non-zero exit (with captured output).
-Uses env(1) to set the env without a shell, so it behaves identically on
-host Emacs and the standalone NeLisp runtime."
+On POSIX, uses env(1) to set the env without a shell, so it behaves
+identically on host Emacs and the standalone NeLisp runtime.  Windows
+has neither /usr/bin/env nor a shell(1) worth shelling out through for
+this, so there `process-environment' is let-bound directly around
+`call-process' instead — same KV pins, no env(1) hop."
   (let* ((prog (nelix-build--stringify program))
          (argv (mapcar #'nelix-build--stringify args))
          (env-kv (nelix-build--env))
          exit out)
     (with-temp-buffer
-      (setq exit (apply #'call-process "/usr/bin/env" nil t nil
-                        (append env-kv (cons prog argv))))
+      (if (eq system-type 'windows-nt)
+          (let ((process-environment (append env-kv process-environment)))
+            (setq exit (apply #'call-process prog nil t nil argv)))
+        (setq exit (apply #'call-process "/usr/bin/env" nil t nil
+                          (append env-kv (cons prog argv)))))
       (setq out (buffer-string)))
     (unless (eq exit 0)
       (signal 'nelix-build-error
