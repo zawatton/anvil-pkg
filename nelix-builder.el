@@ -604,7 +604,14 @@ cons cell.")
       ;; to "connect" to a host literally named "c". Harmless everywhere
       ;; else (paths there never contain a drive-letter colon), so it is
       ;; passed unconditionally rather than gated on `system-type'.
-      . (nelix-invoke "tar" "xzf" (nelix-source-archive) "--strip-components=1" "--force-local"))
+      ;; :tar-exclude lets a recipe skip archive entries tar cannot
+      ;; materialize on Windows (e.g. a broken symlink left over from a
+      ;; git worktree, such as plz.el's NOTES.org -> worktrees/... link)
+      ;; without failing the whole unpack over an entry nothing needs.
+      . (apply #'nelix-invoke "tar" "xzf" (nelix-source-archive)
+               "--strip-components=1" "--force-local"
+               (mapcar (lambda (pat) (concat "--exclude=" pat))
+                       nelix-build--tar-exclude)))
      (install
       . (let ((files (append (nelix-build-package-el-files)
                              (nelix-build-package-extra-files))))
@@ -694,6 +701,7 @@ Examples:
 (defvar nelix-build--source-archive)
 (defvar nelix-build--el-exclude)
 (defvar nelix-build--extra-data-paths)
+(defvar nelix-build--tar-exclude)
 
 (defun nelix-builder--run-phase (phase-name cmd build-dir out-dir &optional phase-inputs)
   "Run build phase PHASE-NAME in BUILD-DIR with $out=OUT-DIR.
@@ -915,6 +923,7 @@ SOURCE_DATE_EPOCH, TZ, LC_ALL, ulimit -t) is applied by
                                           (plist-get recipe :name)))
                   (nelix-build--el-exclude (plist-get install :el-exclude))
                   (nelix-build--extra-data-paths (plist-get install :extra-data-paths))
+                  (nelix-build--tar-exclude (plist-get install :tar-exclude))
                   (nelix-build--source-archive fetched-archive))
               ;; Run each (NAME . CMD) phase in build-dir with $out=out-dir.
               (if (eq nelix-builder-hermeticity 'tier2)
