@@ -86,6 +86,17 @@ input names if NAME is absent."
   "Bound to the package name (string) during an Emacs-package build phase.")
 (defvar nelix-build--source-archive nil
   "Bound to the fetched source archive path during a build phase.")
+(defvar nelix-build--extra-data-paths nil
+  "List of extra relative paths (files or directories) to copy verbatim
+during an Emacs-package install phase, in addition to the .el files
+`nelix-build-package-el-files' selects.  Bound from the recipe install
+plist's `:extra-data-paths'.  The Emacs-package install phase only copies
+.el sources (see `nelix-build-package-el-files'); a package that `require's
+non-Lisp runtime resources by relative path at load/run time (e.g.
+emojify's data/emoji-sets.json, package-lint's data/stdlib-changes) needs
+those paths listed here or they are silently dropped and the package
+fails with file-missing the first time it touches them.")
+
 (defvar nelix-build--el-exclude nil
   "List of .el basenames to drop during an Emacs-package install phase.
 Bound from the recipe install plist's `:el-exclude'.  Lets a recipe refuse to
@@ -132,6 +143,26 @@ which removes same-directory vendored copies of other packages' libraries."
                     (string-match-p "/\\(?:tests?\\|examples?\\|dev\\|docs?\\|features\\|stubs?\\|vendor\\)/" rel))
           (push f result))))
     (nreverse result)))
+
+;;;###autoload
+(defun nelix-build-package-extra-files (&optional dir)
+  "Return absolute paths listed by `nelix-build--extra-data-paths' under DIR
+\(default the build dir\).  Each entry may be a file or a directory; a
+directory is expanded to every non-hidden file under it, recursively.  An
+entry that does not exist in this checkout is silently skipped, so a
+recipe can list a path that only appears in some upstream versions."
+  (let ((root (or dir nelix-build--dir))
+        result)
+    (dolist (rel nelix-build--extra-data-paths (nreverse result))
+      (let ((abs (expand-file-name rel root)))
+        (cond
+         ((file-directory-p abs)
+          (dolist (f (directory-files-recursively abs ".*" nil))
+            (unless (or (file-directory-p f)
+                        (string-prefix-p "." (file-name-nondirectory f)))
+              (push f result))))
+         ((file-exists-p abs)
+          (push abs result)))))))
 
 (defun nelix-build--env ()
   "Return the deterministic environment KV list for `nelix-invoke' (Tier-1).

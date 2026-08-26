@@ -600,11 +600,17 @@ cons cell.")
      (unpack
       . (nelix-invoke "tar" "xzf" (nelix-source-archive) "--strip-components=1"))
      (install
-      . (let ((files (nelix-build-package-el-files)))
+      . (let ((files (append (nelix-build-package-el-files)
+                             (nelix-build-package-extra-files))))
           ;; Keep each package's directory structure (lisp/ subdirs) so load
-          ;; paths stay separate and names never collide.  Install .el only:
-          ;; byte-compiling before the full dependency closure is on load-path
-          ;; produces broken .elc that break activation; plain .el always loads.
+          ;; paths stay separate and names never collide.  Install .el only
+          ;; (plus any :extra-data-paths the recipe lists): byte-compiling
+          ;; before the full dependency closure is on load-path produces
+          ;; broken .elc that break activation; plain .el always loads.
+          ;; Non-Lisp runtime resources a package require's by relative path
+          ;; (e.g. emojify's data/emoji-sets.json) are dropped by the .el-only
+          ;; scan above, so a recipe lists them explicitly via
+          ;; `:extra-data-paths' to have them copied alongside the .el files.
           (nelix-mkdir-p (nelix-out))
           (dolist (f files)
             (let ((dest (expand-file-name (file-relative-name f nelix-build--dir)
@@ -901,6 +907,7 @@ SOURCE_DATE_EPOCH, TZ, LC_ALL, ulimit -t) is applied by
             (let ((nelix-build--pname (or (plist-get install :pname)
                                           (plist-get recipe :name)))
                   (nelix-build--el-exclude (plist-get install :el-exclude))
+                  (nelix-build--extra-data-paths (plist-get install :extra-data-paths))
                   (nelix-build--source-archive fetched-archive))
               ;; Run each (NAME . CMD) phase in build-dir with $out=out-dir.
               (if (eq nelix-builder-hermeticity 'tier2)
