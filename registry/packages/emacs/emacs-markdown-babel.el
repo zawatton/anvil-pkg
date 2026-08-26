@@ -8,10 +8,6 @@
 
 (require 'nelix-registry)
 
-(nelix-package
- :name "emacs-markdown-babel"
- :version "0.0.1-alpha"
- :class 'emacs-package
- :systems '((x86_64-linux :source (:type url :url "https://codeload.github.com/whacked/emacs-markdown-babel/tar.gz/f7a65a240a1f60255a121b84cd3fa1cec3abb7ef" :sha256 "sha256-cb9577521534aa46247fb4f01a969f629e713e79f32eb6be3a1d04edaff6f517") :dependencies ("markdown-mode" "s" "f") :install (:type build :build-system emacs-package :pname "emacs-markdown-babel" :load-paths (".") :features (emacs-markdown-babel)))))
+(nelix-package :name "emacs-markdown-babel" :version "0.0.1-alpha" :class 'emacs-package :systems '((x86_64-linux :source (:type url :url "https://codeload.github.com/whacked/emacs-markdown-babel/tar.gz/f7a65a240a1f60255a121b84cd3fa1cec3abb7ef" :sha256 "sha256-cb9577521534aa46247fb4f01a969f629e713e79f32eb6be3a1d04edaff6f517") :dependencies ("markdown-mode" "s" "f") :install (:type build :build-system emacs-package :pname "emacs-markdown-babel" :load-paths (".") :features (emacs-markdown-babel))) (x86_64-windows :source (:type url :url "https://codeload.github.com/whacked/emacs-markdown-babel/tar.gz/f7a65a240a1f60255a121b84cd3fa1cec3abb7ef" :sha256 "sha256-cb9577521534aa46247fb4f01a969f629e713e79f32eb6be3a1d04edaff6f517") :dependencies ("markdown-mode" "s" "f") :install (:type build :build-system emacs-package :pname "emacs-markdown-babel" :load-paths (".") :features (emacs-markdown-babel)))))
 
 ;;; emacs-markdown-babel.el ends here

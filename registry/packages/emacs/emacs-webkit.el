@@ -9,10 +9,6 @@
 
 (require 'nelix-registry)
 
-(nelix-package
- :name "emacs-webkit"
- :version "0.1"
- :class 'emacs-package
- :systems '((x86_64-linux :source (:type url :url "https://codeload.github.com/akirakyle/emacs-webkit/tar.gz/4c5caa8e2c2baa09400d3c4a467d4799d735d388" :sha256 "sha256-43347ebeeb1ce084e18d4c8cd76ee9d936b8bafdd463ba9691d7a9444d62fb32") :dependencies nil :install (:type build :build-system emacs-package :pname "emacs-webkit" :load-paths (".") :features (webkit)))))
+(nelix-package :name "emacs-webkit" :version "0.1" :class 'emacs-package :systems '((x86_64-linux :source (:type url :url "https://codeload.github.com/akirakyle/emacs-webkit/tar.gz/4c5caa8e2c2baa09400d3c4a467d4799d735d388" :sha256 "sha256-43347ebeeb1ce084e18d4c8cd76ee9d936b8bafdd463ba9691d7a9444d62fb32") :dependencies nil :install (:type build :build-system emacs-package :pname "emacs-webkit" :load-paths (".") :features (webkit))) (x86_64-windows :source (:type url :url "https://codeload.github.com/akirakyle/emacs-webkit/tar.gz/4c5caa8e2c2baa09400d3c4a467d4799d735d388" :sha256 "sha256-43347ebeeb1ce084e18d4c8cd76ee9d936b8bafdd463ba9691d7a9444d62fb32") :dependencies nil :install (:type build :build-system emacs-package :pname "emacs-webkit" :load-paths (".") :features (webkit)))))
 
 ;;; emacs-webkit.el ends here
